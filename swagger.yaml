@@ -1,0 +1,368 @@
+openapi: "3.0.0"
+info:
+  title: "Re:furnish API"
+  description: "API Documentation for the Re:furnish project MVP. This API uses an httpOnly cookie for session management."
+  version: "1.0.0"
+servers:
+  - url: "http://localhost:8080"
+    description: Local Development Server
+
+# ===============================================================
+#  ส่วนกลางสำหรับนิยาม Data Models (Schemas)
+# ===============================================================
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "60d0fe4f5311236168a109ca"
+        firstName:
+          type: string
+          example: "Suda"
+        lastName:
+          type: string
+          example: "Deejai"
+        email:
+          type: string
+          format: email
+          example: "suda.d@example.com"
+        avatarUrl:
+          type: string
+          example: "/assets/avatars/avatar-1.svg"
+
+    Product:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        price: { type: number }
+        imageUrl: { type: string }
+        category:
+          type: string
+          enum:
+            ["Living Room", "Bedroom", "Dining & Kitchen", "Decor & Lighting"]
+        status:
+          type: string
+          enum: ["available", "sold"]
+
+    Order:
+      type: object
+      properties:
+        _id: { type: string }
+        user: { type: string }
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              _id: { type: string }
+              name: { type: string }
+              price: { type: number }
+              imageUrl: { type: string }
+        totalAmount: { type: number }
+        shippingDetails:
+          type: object
+          properties:
+            recipientName: { type: string }
+            phoneNumber: { type: string }
+            address: { type: string }
+        status: { type: string }
+        orderDate:
+          type: string
+          format: date-time
+
+# ===============================================================
+#  Paths / Endpoints ทั้งหมด
+# ===============================================================
+paths:
+  # --- Authentication ---
+  /api/auth/signup:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName: { type: string }
+                lastName: { type: string }
+                email: { type: string }
+                password: { type: string, minLength: 6 }
+                avatarUrl: { type: string }
+              required: [firstName, lastName, email, password, avatarUrl]
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+
+  /api/auth/signin:
+    post:
+      tags: [Authentication]
+      summary: Login a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+              required: [email, password]
+      responses:
+        "200":
+          description: Login successful, httpOnly cookie is set
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout a user
+      responses:
+        "200":
+          description: Logged out successfully
+
+  /api/auth/profile:
+    get:
+      tags: [Authentication]
+      summary: Get current user's profile (protected)
+      responses:
+        "200":
+          description: User profile data
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401":
+          description: Unauthorized
+
+  # --- Products ---
+  /api/products:
+    get:
+      tags: [Products]
+      summary: Get all products with filtering and pagination
+      parameters:
+        - {
+            in: query,
+            name: category,
+            schema: { type: string },
+            description: Filter by category,
+          }
+        - {
+            in: query,
+            name: sort,
+            schema: { type: string },
+            description: "Sort by field (e.g., 'createdAt')",
+          }
+        - { in: query, name: page, schema: { type: integer, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, default: 6 } }
+      responses:
+        "200":
+          description: A list of products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items: { $ref: "#/components/schemas/Product" }
+                  page: { type: integer }
+                  totalPages: { type: integer }
+    post:
+      tags: [Products]
+      summary: Create a new product (protected)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                price: { type: number }
+                imageUrl: { type: string }
+                category:
+                  {
+                    type: string,
+                    enum:
+                      [
+                        "Living Room",
+                        "Bedroom",
+                        "Dining & Kitchen",
+                        "Decor & Lighting",
+                      ],
+                  }
+              required: [name, description, price, imageUrl, category]
+      responses:
+        "201":
+          description: Product created successfully
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        "401":
+          description: Unauthorized
+
+  /api/products/{id}:
+    get:
+      tags: [Products]
+      summary: Get a single product by ID
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Product details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Product" }
+        "404":
+          description: Product not found
+
+  # --- Cart ---
+  /api/cart/me:
+    get:
+      tags: [Cart]
+      summary: Get the current user's cart (protected)
+      responses:
+        "200":
+          description: The user's cart items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Product" }
+        "401":
+          description: Unauthorized
+    post:
+      tags: [Cart]
+      summary: Add an item to the cart (protected)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId: { type: string }
+              required: [productId]
+      responses:
+        "200":
+          description: The updated cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Product" }
+        "401":
+          description: Unauthorized
+
+  /api/cart/me/{productId}:
+    delete:
+      tags: [Cart]
+      summary: Remove an item from the cart (protected)
+      parameters:
+        - {
+            in: path,
+            name: productId,
+            required: true,
+            schema: { type: string },
+          }
+      responses:
+        "200":
+          description: The updated cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Product" }
+        "401":
+          description: Unauthorized
+
+  # --- Orders ---
+  /api/orders:
+    post:
+      tags: [Orders]
+      summary: Create a new order (protected)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shippingDetails:
+                  type: object
+                  properties:
+                    recipientName: { type: string }
+                    phoneNumber: { type: string }
+                    address: { type: string }
+                products:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      _id: { type: string }
+                      name: { type: string }
+                      price: { type: number }
+                      imageUrl: { type: string }
+                totalAmount:
+                  type: number
+      responses:
+        "201":
+          description: Order created successfully
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "401":
+          description: Unauthorized
+
+  /api/orders/me:
+    get:
+      tags: [Orders]
+      summary: Get the current user's order history (protected)
+      responses:
+        "200":
+          description: A list of the user's orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Order" }
+        "401":
+          description: Unauthorized
+
+  /api/orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: Get a single order by ID (protected)
+      parameters:
+        - { in: path, name: orderId, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "401":
+          description: Unauthorized
+        "404":
+          description: Order not found
