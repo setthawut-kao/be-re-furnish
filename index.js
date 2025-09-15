@@ -26,7 +26,7 @@ const corsOptions = {
     process.env.FRONTEND_URL,
     "http://localhost:5173",
     "http://localhost:5174",
-    "http://localhost:5175",
+    "https://fn-notes-app-for-learning.vercel.app",
   ], // frontend domain
   credentials: true, // ✅ allow cookies to be sent
 };
