@@ -21,10 +21,10 @@ connectDB(); // Connect to MongoDB
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const corsOptions = {
-  origin: [process.env.FRONTEND_URL || "https://fe-re-furnish.vercel.app"], // frontend domain
-  credentials: true, // ✅ allow cookies to be sent
-};
+// const corsOptions = {
+//   origin: [process.env.FRONTEND_URL || "https://fe-re-furnish.vercel.app"], // frontend domain
+//   credentials: true, // ✅ allow cookies to be sent
+// };
 
 // --- swagger setup ---
 if (process.env.NODE_ENV !== "production") {
