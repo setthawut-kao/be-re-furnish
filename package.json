@@ -4,8 +4,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js"
+    "start": "node dist/index.js",
+    "dev": "nodemon index.js",
+    "build": "babel . --out-dir dist --ignore dist,node_modules"
   },
   "keywords": [],
   "author": "",
@@ -13,15 +14,21 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
-    "cookie-parser": "^1.4.7",
+    "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
-    "express-rate-limit": "^8.1.0",
-    "helmet": "^8.1.0",
+    "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.18.1",
+    "mongoose": "^8.18.0",
+    "nodemon": "^3.1.10",
+    "swagger-combine": "^1.4.0",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.28.3",
+    "@babel/core": "^7.28.4",
+    "@babel/preset-env": "^7.28.3"
   }
 }
