@@ -2,8 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
-// import limiter from "./middleware/rateLimiter.js";
-// import errorHandler from "./middleware/errorHandler.js";
+import { generalLimiter, authLimiter } from "./src/middlewares/rateLimiter.js";
+import errorHandler from "./src/middlewares/errorHandler.js";
 import cookieParser from "cookie-parser";
 import connectDB from "./src/config/db.js";
 
@@ -27,12 +27,19 @@ const corsOptions = {
 };
 
 // --- swagger setup ---
-const swaggerDocument = YAML.load("./swagger.yaml");
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+if (process.env.NODE_ENV !== "production") {
+  const swaggerDocument = YAML.load("./swagger.yaml");
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+}
 
 // --- Middlewares ---
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
 app.use(cors(corsOptions));
+app.use(generalLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Allow app to accept URL-encoded form data
 app.use(cookieParser());
@@ -43,10 +50,12 @@ app.get("/", (req, res) => {
 });
 
 // --- API Routes ---
-app.use("/api/auth", authRouter);
+app.use("/api/auth", authLimiter, authRouter);
 app.use("/api/products", productRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/orders", orderRouter);
+
+app.use(errorHandler);
 
 // --- Start Server ---
 app.listen(PORT, () => {
