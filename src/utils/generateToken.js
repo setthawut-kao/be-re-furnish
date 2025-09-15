@@ -9,9 +9,9 @@ const generateTokenAndSetCookie = (userId, res) => {
   // 2. ตั้งค่า Token ให้เป็น httpOnly Cookie
   res.cookie("jwt", token, {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 วัน (หน่วยเป็น ms)
-    httpOnly: true, // ป้องกันการเข้าถึงจาก JavaScript (ป้องกัน XSS attack)
-    secure: process.env.NODE_ENV !== "development", // ใน Production ให้ใช้ HTTPS เท่านั้น
-    sameSite: "strict", // ป้องกัน CSRF attack
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
   });
 };
 
