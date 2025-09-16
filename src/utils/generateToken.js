@@ -1,22 +1,23 @@
 import jwt from "jsonwebtoken";
 
-const generateTokenAndSetCookie = (userId, res) => {
-  // 1. สร้าง JWT token โดยใช้ userId และ Secret Key ของเรา
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: "1d", // Token มีอายุ 1 วัน
+export const generateTokens = (userId) => {
+  const accessToken = jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "15m",
   });
 
-  const isProd = process.env.NODE_ENV === "production";
+  const refreshToken = jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
 
-  // 2. ตั้งค่า Token ให้เป็น httpOnly Cookie
-  res.cookie("jwt", token, {
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 วัน (หน่วยเป็น ms)
+  return { accessToken, refreshToken };
+};
+
+export const setRefreshTokenCookie = (res, refreshToken) => {
+  const isProd = process.env.NODE_ENV === "production";
+  res.cookie("refreshToken", refreshToken, {
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 วัน
     httpOnly: true,
     secure: isProd,
     sameSite: isProd ? "none" : "lax",
   });
-
-  return token;
 };
-
-export default generateTokenAndSetCookie;

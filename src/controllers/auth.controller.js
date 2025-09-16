@@ -1,10 +1,12 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-import generateTokenAndSetCookie from "../utils/generateToken.js";
+import {
+  generateTokens,
+  setRefreshTokenCookie,
+} from "../utils/generateToken.js";
 
 export const signUp = async (req, res) => {
   try {
-    console.log("BE received this data for signup:", req.body);
     //  Add 'avatarUrl' to the list of destructured properties
     const { firstName, lastName, email, password, avatarUrl } = req.body;
 
@@ -34,18 +36,21 @@ export const signUp = async (req, res) => {
       password,
       avatarUrl,
     });
+    await newUser.save();
 
     if (newUser) {
-      const token = generateTokenAndSetCookie(newUser._id, res);
-      await newUser.save();
+      const { accessToken, refreshToken } = generateTokens(newUser._id);
+      setRefreshTokenCookie(res, refreshToken);
 
       res.status(201).json({
-        _id: newUser._id,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        email: newUser.email,
-        avatarUrl: newUser.avatarUrl,
-        accessToken: token,
+        user: {
+          _id: newUser._id,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          email: newUser.email,
+          avatarUrl: newUser.avatarUrl,
+        },
+        accessToken: accessToken,
       });
     } else {
       res.status(400).json({ message: "Invalid user data" });
@@ -70,15 +75,18 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const token = generateTokenAndSetCookie(user._id, res);
+    const { accessToken, refreshToken } = generateTokens(user._id);
+    setRefreshTokenCookie(res, refreshToken);
 
     res.status(200).json({
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      avatarUrl: user.avatarUrl,
-      accessToken: token,
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+      },
+      accessToken: accessToken,
     });
   } catch (error) {
     console.log("Error in login controller: ", error.message);
@@ -88,8 +96,8 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    // เคลียร์ Cookie ที่ชื่อ 'jwt'
-    res.cookie("jwt", "", { maxAge: 0 });
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.log("Error in logout controller: ", error.message);

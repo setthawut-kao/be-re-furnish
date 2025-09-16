@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 
 export const protectRoute = async (req, res, next) => {
   try {
-    const token = req.cookies.jwt;
+    const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res
@@ -11,7 +11,7 @@ export const protectRoute = async (req, res, next) => {
         .json({ message: "Unauthorized - No Token Provided" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
     if (!decoded) {
       return res.status(401).json({ message: "Unauthorized - Invalid Token" });
@@ -28,6 +28,9 @@ export const protectRoute = async (req, res, next) => {
     next();
   } catch (error) {
     console.log("Error in protectRoute middleware: ", error.message);
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Unauthorized - Token Expired" });
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 };
