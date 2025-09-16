@@ -3,9 +3,6 @@ import User from "../models/user.model.js";
 
 export const protectRoute = async (req, res, next) => {
   try {
-    console.log(
-      `[Middleware] Protecting route: ${req.method} ${req.originalUrl}`
-    );
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {

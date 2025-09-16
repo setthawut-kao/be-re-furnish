@@ -107,7 +107,6 @@ export const logout = (req, res) => {
 
 export const getProfile = (req, res) => {
   try {
-    console.log("[Controller] Executing getProfile for user:", req.user.email);
     // middleware 'protectRoute' ได้ทำงานและแนบ user มากับ request แล้ว
     const user = req.user;
     res.status(200).json(user);
