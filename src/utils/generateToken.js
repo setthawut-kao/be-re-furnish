@@ -6,6 +6,8 @@ const generateTokenAndSetCookie = (userId, res) => {
     expiresIn: "1d", // Token มีอายุ 1 วัน
   });
 
+  const isProd = process.env.NODE_ENV === "production";
+
   // 2. ตั้งค่า Token ให้เป็น httpOnly Cookie
   res.cookie("jwt", token, {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 วัน (หน่วยเป็น ms)
@@ -13,6 +15,8 @@ const generateTokenAndSetCookie = (userId, res) => {
     secure: isProd,
     sameSite: isProd ? "none" : "lax",
   });
+
+  return token;
 };
 
 export default generateTokenAndSetCookie;
