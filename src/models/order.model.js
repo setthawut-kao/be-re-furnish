@@ -10,6 +10,7 @@ const orderSchema = new mongoose.Schema(
         price: { type: Number, required: true },
         imageUrl: { type: String, required: true },
         category: { type: String },
+        description: { type: String },
       },
     ],
     totalAmount: { type: Number, required: true },
